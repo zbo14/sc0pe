@@ -98,7 +98,7 @@ module.exports = async (file, opts) => {
     warn('[+] Discovering subdomains for ' + domain)
 
     const subdomains = await exec('amass enum -norecursive -passive -d ' + domain)
-      .then(({ stdout }) => stdout.split('\n').filter(Boolean).filter(inScope))
+      .then(({ stdout }) => stdout.split('\n').filter(inScope))
       .catch(err => error('[!] ' + err.message) || [])
 
     const promises = []
