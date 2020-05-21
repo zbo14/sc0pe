@@ -29,7 +29,7 @@ Options:
 
 Then it recursively performs passive enumeration of subdomains until reaching a prespecified `--depth` or `--timeout`. If you don't want recursion, include the `--fast` option.
 
-By default, `sc0pe` only explores wildcard domains but you can add the `--adventurous` to discover subdomains for non-wildcard domains.
+By default, `sc0pe` only explores wildcard domains but you can add the `--adventurous` flag to discover subdomains for non-wildcard domains.
 
-`sc0pe` runs `amass` in several processes and explores a different batch of domains in each process. You can set the maximum number of processes running and the maximum number of domains in a batch with `--nprocs` and `--batch-size`, respectively.
+`sc0pe` runs `amass` in several processes and explores a different batch of domains in each process. You can set the maximum number of processes and the maximum number of domains in a batch with `--nprocs` and `--batch-size`, respectively.
 
