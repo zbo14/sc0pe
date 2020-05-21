@@ -9,6 +9,7 @@ program
   .version('1.0.0')
   .arguments('<file>')
   .option('-a, --adventurous', 'enumerate subdomains for non-wildcard domains')
+  .option('-b, --batch-size <int>', 'max number of domains to give amass at once', 5)
   .option('-d, --depth <int>', 'max depth for recursive subdomain enumeration', 3)
   .option('-f, --fast', 'do a fast scan, i.e. no recursive subdomain enumeration')
   .option('-n, --nprocs <int>', 'max number of subdomain enumeration processes', 20)

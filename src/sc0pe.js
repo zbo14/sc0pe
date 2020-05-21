@@ -1,11 +1,8 @@
 'use strict'
 
-const cp = require('child_process')
+const { spawn } = require('child_process')
 const { readFile } = require('fs').promises
-const { promisify } = require('util')
 const banner = require('./banner')
-
-const exec = promisify(cp.exec)
 
 module.exports = async (file, opts) => {
   const error = opts.quiet ? () => {} : msg => console.error('\x1b[31m%s\x1b[0m', msg)
@@ -72,11 +69,15 @@ module.exports = async (file, opts) => {
     return include.some(({ host }) => host.test(domain))
   }
 
-  let done = false
-  const found = new Set()
-  let nprocs = 0
+  const batchSize = +opts.batchSize || 5
+  const discovered = new Set()
+  const maxDepth = +opts.depth || 3
+  const maxProcs = +opts.nprocs || 20
   const queue = []
   const timeout = Math.round(+opts.timeout)
+
+  let done = false
+  let nprocs = 0
 
   if (timeout > 0) {
     setTimeout(() => {
@@ -86,49 +87,80 @@ module.exports = async (file, opts) => {
     }, timeout * 1e3)
   }
 
-  const enumerate = async (domain, depth = 1) => {
-    if (done || (!opts.fast && depth === opts.depth)) return
+  const enumerate = async (domains, depth = 1) => {
+    if (done || !domains.length || (!opts.fast && depth === maxDepth)) return
 
-    if (nprocs === opts.nprocs) {
+    if (nprocs >= maxProcs) {
       await new Promise(resolve => queue.push(resolve))
     }
 
     ++nprocs
 
-    warn('[+] Discovering subdomains for ' + domain)
+    domains.forEach(domain => warn('[+] Discovering subdomains for ' + domain))
 
-    const subdomains = await exec('amass enum -norecursive -passive -d ' + domain)
-      .then(({ stdout }) => stdout.split('\n').filter(inScope))
-      .catch(err => error('[!] ' + err.message) || [])
+    const arr = []
 
-    const promises = []
+    let found = 0
 
-    subdomains.forEach(subdomain => {
-      if (found.has(subdomain)) return
+    await new Promise((resolve, reject) => {
+      const child = spawn('amass', [
+        'enum',
+        '-d', domains.join(','),
+        '-nolocaldb',
+        '-norecursive',
+        '-passive'
+      ]).once('error', reject)
+        .once('exit', resolve)
 
-      found.add(subdomain)
-      console.log(subdomain)
+      child.stdout.on('data', data => {
+        data.toString().split('\n').forEach(subdomain => {
+          subdomain = subdomain.trim()
 
-      if (!opts.fast) {
-        const promise = enumerate(subdomain, depth + 1)
-        promises.push(promise)
-      }
+          if (!inScope(subdomain) || discovered.has(subdomain)) return
+
+          discovered.add(subdomain)
+          console.log(subdomain)
+          ++found
+
+          opts.fast || arr.push(subdomain)
+        })
+      })
     })
-
-    --nprocs
 
     const next = queue.shift()
 
     next && next()
 
-    warn(`[+] Found ${subdomains.length} subdomains for ${domain}`)
+    --nprocs
 
-    await Promise.all(promises)
+    if (found === 1) {
+      warn('[+] Found 1 new subdomain')
+    } else if (found) {
+      warn(`[+] Found ${found} new subdomains`)
+    }
+
+    if (!opts.fast) {
+      const promises = []
+
+      for (let i = 0; i < arr.length; i += batchSize) {
+        const batch = arr.slice(i, i + batchSize)
+        const promise = enumerate(batch, depth + 1)
+        promises.push(promise)
+      }
+
+      await Promise.all(promises)
+    }
   }
 
   warn('[+] Starting subdomain enumeration')
 
-  const promises = domains.map(domain => enumerate(domain))
+  const promises = []
+
+  for (let i = 0; i < domains.length; i += batchSize) {
+    const batch = domains.slice(i, i + batchSize)
+    const promise = enumerate(batch)
+    promises.push(promise)
+  }
 
   await Promise.all(promises)
 
