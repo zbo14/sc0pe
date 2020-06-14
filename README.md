@@ -2,13 +2,13 @@
 
 A CLI to find in-scope subdomains for bug bounty programs!
 
-`sc0pe` uses [amass](https://github.com/OWASP/Amass) and [Sublist3r](https://github.com/aboul3la/Sublist3r) to enumerate subdomains.
+`sc0pe` uses [amass](https://github.com/OWASP/Amass), [subfinder](https://github.com/projectdiscovery/subfinder), and [Sublist3r](https://github.com/aboul3la/Sublist3r) to enumerate subdomains.
 
 ## Install
 
 `npm i sc0pe`
 
-Make sure you have `amass` installed!
+This will install `Sublist3r` as a submodule - you should install `amass` and `subfinder` yourself.
 
 ## Usage
 

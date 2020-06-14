@@ -137,6 +137,15 @@ program
       })
 
       const promise2 = new Promise((resolve, reject) => {
+        const child = spawn('subfinder', ['-d', domain])
+          .once('error', reject)
+          .once('exit', resolve)
+
+        child.stdout.setEncoding('utf8')
+        child.stdout.on('data', cb)
+      })
+
+      const promise3 = new Promise((resolve, reject) => {
         const child = spawn('python3', [
           path.join(__dirname, 'Sublist3r', 'sublist3r.py'),
           '-d', domain,
@@ -148,7 +157,7 @@ program
         child.stdout.on('data', cb)
       })
 
-      await Promise.all([promise1, promise2])
+      await Promise.all([promise1, promise2, promise3])
 
       const next = queue.shift()
 
