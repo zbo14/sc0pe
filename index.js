@@ -15,7 +15,7 @@ program
   .version('0.0.0')
   .arguments('<file>')
   .option('-a, --adventurous', 'enumerate subdomains for non-wildcard domains')
-  .option('-n, --parallelism <int>', 'max number of domains to scan in parallel', 10)
+  .option('-p, --parallelism <int>', 'max number of domains to scan in parallel', 10)
   .option('-q, --quiet', 'don\'t show banner and info')
   .action(async (file, opts) => {
     const warn = opts.quiet ? () => {} : msg => console.warn('\x1b[33m%s\x1b[0m', msg)
@@ -132,8 +132,9 @@ program
         ]).once('error', reject)
           .once('exit', resolve)
 
-        child.stdout.setEncoding('utf8')
-        child.stdout.on('data', cb)
+        child.stdout
+          .setEncoding('utf8')
+          .on('data', cb)
       })
 
       const promise2 = new Promise((resolve, reject) => {
@@ -141,8 +142,9 @@ program
           .once('error', reject)
           .once('exit', resolve)
 
-        child.stdout.setEncoding('utf8')
-        child.stdout.on('data', cb)
+        child.stdout
+          .setEncoding('utf8')
+          .on('data', cb)
       })
 
       const promise3 = new Promise((resolve, reject) => {
@@ -153,8 +155,9 @@ program
         ]).once('error', reject)
           .once('exit', resolve)
 
-        child.stdout.setEncoding('utf8')
-        child.stdout.on('data', cb)
+        child.stdout
+          .setEncoding('utf8')
+          .on('data', cb)
       })
 
       await Promise.all([promise1, promise2, promise3])
