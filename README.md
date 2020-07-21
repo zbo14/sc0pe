@@ -13,12 +13,24 @@ This will install `Sublist3r` as a submodule - you should install `amass` and `s
 ## Usage
 
 ```
+ @@@@@@    @@@@@@@   @@@@@@@@   @@@@@@@   @@@@@@@@
+@@@@@@@   @@@@@@@@  @@@@@@@@@@  @@@@@@@@  @@@@@@@@
+!@@       !@@       @@!   @@@@  @@!  @@@  @@!
+!@!       !@!       !@!  @!@!@  !@!  @!@  !@!
+!!@@!!    !@!       @!@ @! !@!  @!@@!@!   @!!!:!
+ !!@!!!   !!!       !@!!!  !!!  !!@!!!    !!!!!:
+     !:!  :!!       !!:!   !!!  !!:       !!:
+    !:!   :!:       :!:    !:!  :!:       :!:
+:::: ::    ::: :::  ::::::: ::   ::        :: ::::
+:: : :     :: :: :   : : :  :    :        : :: ::
+
+
 Usage: sc0pe [options] <file>
 
 Options:
   -V, --version            output the version number
   -a, --adventurous        enumerate subdomains for non-wildcard domains
-  -p, --parallelism <int>  max number of domains to scan in parallel (default: 10)
+  -p, --parallelism <int>  max number of domains to scan in parallel (default: 1)
   -q, --quiet              don't show banner and info
   -h, --help               display help for command
 ```

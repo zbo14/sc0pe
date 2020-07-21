@@ -4,6 +4,7 @@
 
 const { spawn } = require('child_process')
 const commander = require('commander')
+const { once } = require('events')
 const fs = require('fs')
 const path = require('path')
 
@@ -12,10 +13,10 @@ const error = msg => console.error('\x1b[31m%s\x1b[0m', msg)
 const program = new commander.Command()
 
 program
-  .version('0.0.0')
+  .version('0.0.1')
   .arguments('<file>')
   .option('-a, --adventurous', 'enumerate subdomains for non-wildcard domains')
-  .option('-p, --parallelism <int>', 'max number of domains to scan in parallel', 10)
+  .option('-p, --parallelism <int>', 'max number of domains to scan in parallel', 1)
   .option('-q, --quiet', 'don\'t show banner and info')
   .action(async (file, opts) => {
     const warn = opts.quiet ? () => {} : msg => console.warn('\x1b[33m%s\x1b[0m', msg)
@@ -49,14 +50,15 @@ program
 
     include.forEach(obj => {
       let host = obj.host.replace(/\^|\\|\$/g, '')
-      const wildcard = host.startsWith('.*')
+      const wildcardStart = host.startsWith('.*')
+      const wildcardMiddle = host.split('.').slice(1).join('.').includes('.*')
 
-      if (!wildcard && opts.adventurous) {
+      if (!wildcardStart && opts.adventurous) {
         host = '.*.' + host
         obj.host = '^.*\\.' + obj.host.slice(1)
       }
 
-      if (wildcard || opts.adventurous) {
+      if (!wildcardMiddle && (wildcardStart || opts.adventurous)) {
         const domain = host.slice(3)
         domains.add(domain)
       }
@@ -110,6 +112,7 @@ program
 
         discovered.add(subdomain)
         console.log(subdomain)
+
         ++found
       })
     }
@@ -123,44 +126,32 @@ program
 
       warn('[+] Discovering subdomains for ' + domain)
 
-      const promise1 = new Promise((resolve, reject) => {
-        const child = spawn('amass', [
+      const procs = [
+        spawn('amass', [
           'enum',
           '-d', domain,
           '-nolocaldb',
           '-passive'
-        ]).once('error', reject)
-          .once('exit', resolve)
+        ]),
 
-        child.stdout
-          .setEncoding('utf8')
-          .on('data', cb)
-      })
+        spawn('subfinder', ['-d', domain]),
 
-      const promise2 = new Promise((resolve, reject) => {
-        const child = spawn('subfinder', ['-d', domain])
-          .once('error', reject)
-          .once('exit', resolve)
-
-        child.stdout
-          .setEncoding('utf8')
-          .on('data', cb)
-      })
-
-      const promise3 = new Promise((resolve, reject) => {
-        const child = spawn('python3', [
+        spawn('python3', [
           path.join(__dirname, 'Sublist3r', 'sublist3r.py'),
           '-d', domain,
           '-n'
-        ]).once('error', reject)
-          .once('exit', resolve)
+        ])
+      ]
 
-        child.stdout
+      const promises = procs.map(proc => {
+        proc.stdout
           .setEncoding('utf8')
           .on('data', cb)
+
+        return once(proc, 'exit')
       })
 
-      await Promise.all([promise1, promise2, promise3])
+      await Promise.all(promises)
 
       const next = queue.shift()
 

@@ -1,6 +1,6 @@
 {
   "name": "sc0pe",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A CLI to find in-scope subdomains for bug bounty programs",
   "bin": "index.js",
   "scripts": {
